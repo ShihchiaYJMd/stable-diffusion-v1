@@ -6,6 +6,7 @@ from attention import SelfAttention
 class Clip(nn.Module):
 
     def __init__(self):
+        super().__init__()
         self.embedding = CLIPEmbedding(49408, 768, 77)
         # vocabulary size = 49408 from files
         # embedding dimension = 768

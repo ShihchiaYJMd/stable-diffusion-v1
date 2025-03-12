@@ -6,6 +6,7 @@ import numpy as np
 
 class DDPMSampler:
     def __init__(self, generator: torch.Generator, num_training_steps=1000, beta_start: float = 0.00085, beta_end: float = 0.012):
+        self.betas = torch.linspace(beta_start ** 0.5, beta_end ** 0.5, num_training_steps, dtype=torch.float32) ** 2
         # 先平方根后线性插值再平方
         # +-------------------+--------------------------------------------------------------+
         # |      优点          |                          解释                                |
@@ -27,7 +28,6 @@ class DDPMSampler:
         # | 总结               | 通过非线性调整beta，优化噪声添加动态过程，使训练更稳定、生成质量更高    |
         # |                   | 是经验性改进与数学设计的结合                                      |
         # +-------------------+--------------------------------------------------------------+
-        self.betas = torch.linspace(beta_start ** 0.5, beta_end ** 0.5, num_training_steps, dtype=torch.float32) ** 2
         self.alphas = 1.0 - self.betas
         self.alphas_cumprod = torch.cumprod(self.alphas, dim=0)   # [alpha_0, alpha_0 * alpha_1, ..., alpha_0 * alpha_1 * ... * alpha_n]
         self.one = torch.tensor(1.0)

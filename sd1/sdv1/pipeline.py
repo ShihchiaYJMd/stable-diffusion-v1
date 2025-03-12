@@ -12,9 +12,13 @@ LATENT_HEIGHT = WIDTH // 8
 def generate(prompt: str, 
               uncond_prompt: str = None, # Negative prompt or empty string
               input_image=None,
-              strength=0.8, do_cfg=True, cfg_scale=7.5, 
+              strength=0.8, 
+              do_cfg=True, 
+              cfg_scale=7.5, 
               sampler_name="ddpm", 
-              n_inference_steps=50, models={}, seed=None,
+              n_inference_steps=50, 
+              models={}, 
+              seed=None,
               device=None,
               idle_device=None,
               tokenizer=None
@@ -60,7 +64,7 @@ def generate(prompt: str,
             uncond_context = clip(uncond_tokens)
 
             # (Batch_Size, Seq_Len, Dim) + (Batch_Size, Seq_Len, Dim) -> (2 * Batch_Size, Seq_Len, Dim) = (2, 77, 768)
-            context = torch.cat([uncond_context, cond_context])
+            context = torch.cat([cond_context, uncond_context])
 
         else:
             # Convert the prompt into a list of tokens
@@ -149,6 +153,7 @@ def generate(prompt: str,
         # (Batch_Size, Channel, Height, Width) -> (Batch_Size, Height, Width, Channel)
         images = images.permute(0, 2, 3, 1)
         images = images.to('cpu', torch.uint8).numpy()
+        # (1, Height, Width, Channel) -> (Height, Width, Channel)
         return images[0]
 
 
@@ -157,11 +162,15 @@ def rescale(x, old_range, new_range, clamp=False):
     new_min, new_max = new_range
     x = (x - old_min) / (old_max - old_min) * (new_max - new_min) + new_min
     if clamp:
+        # 将张量 x 中的每个元素限制在 [new_min, new_max] 的范围内
         x = x.clamp(new_min, new_max)
     return x
 
 
-def  get_time_embedding(timestep):
+def get_time_embedding(timestep):
+    """这个嵌入用于将时间信息编码为模型可以理解的格式
+    将时间步（通常是一个整数）转换为一个高维向量, 可以被模型的其他部分使用，以便在生成过程中考虑时间信息
+    帮助模型在不同的时间步中生成不同的噪声模式"""
     # use same frequencies of cosine and sine in transformer
     # 基于Transformer中位置编码的思想，使用不同频率的正弦和余弦函数来表示不同的位置（这里是时间步），频率按照指数递减，从高频到低频
     # 输入: timestep (例如 t=5)
@@ -189,6 +198,7 @@ def  get_time_embedding(timestep):
     # (1, 160)
     x = torch.tensor([timestep], dtype=torch.float32)[:, None] * freqs[None]
     # (1, 160 * 2)
+    # 使用正弦和余弦函数生成嵌入，以便在不同的时间步中生成不同的模式
     return torch.cat([torch.cos(x), torch.sin(x)], dim=-1)
 
 

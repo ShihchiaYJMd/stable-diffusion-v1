@@ -111,7 +111,7 @@ class CrossAttention(nn.Module):
         k = k.view(interim_shape).transpose(1, 2)  # (Batch_Size, H, Seq_Len_KV, Dim_Q / H)
         v = v.view(interim_shape).transpose(1, 2)  # (Batch_Size, H, Seq_Len_KV, Dim_Q / H)
 
-        weight = q @ k.transpose(-2, -1)  # (Batch_Size, H, Seq_Len_Q, Seq_Len_KV)
+        weight = q @ k.transpose(-1, -2)  # (Batch_Size, H, Seq_Len_Q, Seq_Len_KV)
         weight = weight / math.sqrt(self.d_head)  
         weight = torch.softmax(weight, dim=-1)  # (Batch_Size, H, Seq_Len_Q, Seq_Len_KV)  # Attention weights
 

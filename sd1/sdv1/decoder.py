@@ -76,6 +76,7 @@ class VAE_ResidualBlock(nn.Module):
         
         # (Batch_Size, Out_Channels, Height, Width) -> (Batch_Size, Out_Channels, Height, Width)
         return x + self.residual_layer(residue)
+    
 
 class VAE_Decoder(nn.Sequential):
     

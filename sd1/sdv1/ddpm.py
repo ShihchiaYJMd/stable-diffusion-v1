@@ -6,7 +6,6 @@ import numpy as np
 
 class DDPMSampler:
     def __init__(self, generator: torch.Generator, num_training_steps=1000, beta_start: float = 0.00085, beta_end: float = 0.012):
-        self.betas = torch.linspace(beta_start ** 0.5, beta_end ** 0.5, num_training_steps, dtype=torch.float32) ** 2
         # 先平方根后线性插值再平方
         # +-------------------+--------------------------------------------------------------+
         # |      优点          |                          解释                                |
@@ -28,6 +27,7 @@ class DDPMSampler:
         # | 总结               | 通过非线性调整beta，优化噪声添加动态过程，使训练更稳定、生成质量更高    |
         # |                   | 是经验性改进与数学设计的结合                                      |
         # +-------------------+--------------------------------------------------------------+
+        self.betas = torch.linspace(beta_start ** 0.5, beta_end ** 0.5, num_training_steps, dtype=torch.float32) ** 2
         self.alphas = 1.0 - self.betas
         self.alphas_cumprod = torch.cumprod(self.alphas, dim=0)   # [alpha_0, alpha_0 * alpha_1, ..., alpha_0 * alpha_1 * ... * alpha_n]
         self.one = torch.tensor(1.0)
@@ -86,6 +86,12 @@ class DDPMSampler:
 
         variance = torch.clamp(variance, min=1e-20)
         return variance
+    
+    def set_strength(self, strength: float = 1):
+        # strength: 0~1
+        start_step = self.num_inference_steps - int(self.num_inference_steps * strength)
+        self.timesteps = self.timesteps[start_step:]
+        self.start_step = start_step
 
     def step(self, timestep: int, latents: torch.FloatTensor, model_output: torch.FloatTensor):
         # model_output: \epsilion_{\theta}(\vec{x}_t, t) predicted noise @ timestep t
@@ -105,11 +111,11 @@ class DDPMSampler:
 
         # formula(15) or fomula(7)[x_0 is predicted(unknown), x_t is known]
         # compute the predicted original sample using formula(15) of the DDPM paper
-        pred_original_sample = (latents - beta_prod_t ** 0.5 * model_output) / alpha_prod_t ** 0.5
+        pred_original_sample = (latents - beta_prod_t ** (0.5) * model_output) / alpha_prod_t ** (0.5)
 
         # compute the coefficients for pred_original_sample and current sample x_t
-        pred_original_sample_coeff = (alpha_prod_t_prev ** 0.5 * current_beta_t) / beta_prod_t
-        current_sample_coeff = current_alpha_t ** 0.5 * beta_prod_t_prev / beta_prod_t
+        pred_original_sample_coeff = (alpha_prod_t_prev ** (0.5) * current_beta_t) / beta_prod_t
+        current_sample_coeff = current_alpha_t ** (0.5) * beta_prod_t_prev / beta_prod_t
 
         # compute the predicted previous sample mean
         pred_prev_sample = pred_original_sample_coeff * pred_original_sample + current_sample_coeff * latents
@@ -126,13 +132,6 @@ class DDPMSampler:
         pred_prev_sample = pred_prev_sample + variance
 
         return pred_prev_sample
-
-    
-    def set_strength(self, strength: float = 1):
-        # strength: 0~1
-        start_step = self.num_inference_steps - int(self.num_inference_steps * strength)
-        self.timesteps = self.timesteps[start_step:]
-        self.start_step = start_step
 
 
     def add_noise(self, original_sample: torch.FloatTensor, timesteps: torch.IntTensor) -> torch.FloatTensor:
@@ -157,7 +156,7 @@ class DDPMSampler:
         # Z = N(0, 1) -> N(mean, var) = X?
         # X = mean + stdev * Z
         noise = torch.randn(original_sample.shape, generator=self.generator, device=original_sample.device, dtype=original_sample.dtype)
-        noisy_samples = sqrt_one_minus_alpha_prod * original_sample + sqrt_one_minus_alpha_prod * noise
+        noisy_samples = sqrt_alpha_prod * original_sample + sqrt_one_minus_alpha_prod * noise
         return noisy_samples
     
 

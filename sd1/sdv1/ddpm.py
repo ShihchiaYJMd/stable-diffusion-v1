@@ -77,8 +77,8 @@ class DDPMSampler:
         # var = (1 - α̅_{t-1}) / (1 - α̅_t) * β_t
         prev_t = self._get_previous_timestep(timestep)
         
-        alpha_prod_t = self.alpha_cumprod[timestep]        # 从0到t的所有alpha的累积乘积(α̅_t)
-        alpha_prod_t_prev = self.alpha_cumprod[prev_t] if prev_t >= 0 else self.one 
+        alpha_prod_t = self.alpha_cumprods[timestep]        # 从0到t的所有alpha的累积乘积(α̅_t)
+        alpha_prod_t_prev = self.alpha_cumprods[prev_t] if prev_t >= 0 else self.one 
         current_beta_t = 1 - alpha_prod_t / alpha_prod_t_prev
         
         # computed using formula (7) of the DDPM paper

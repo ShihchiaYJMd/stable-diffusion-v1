@@ -86,7 +86,7 @@ class UNet(nn.Module):
             SwitchSequential(UNet_ResidualBlock(1280, 1280)),
 
             # (Batch_Size, 1280, Height / 64, Width / 64) -> (Batch_Size, 1280, Height / 64, Width / 64)
-            SwitchSequential(UNet_ResidualBlock(1280, 1280))
+            SwitchSequential(UNet_ResidualBlock(1280, 1280)),
         ])
 
         self.bottleneck = SwitchSequential(
@@ -185,7 +185,7 @@ class UpSample(nn.Module):
         return self.conv(x)
 
     
-class SwitchSequential(nn.Module):
+class SwitchSequential(nn.Sequential):
     # def __init__(self, *layers):
     #     super().__init__()  # 正确地将参数传递给父类
     #     self.layers = nn.ModuleList(layers)
@@ -201,6 +201,7 @@ class SwitchSequential(nn.Module):
             else:
                 x = layer(x)
         return x
+        
     
 
 class UNet_OutputLayer(nn.Module):

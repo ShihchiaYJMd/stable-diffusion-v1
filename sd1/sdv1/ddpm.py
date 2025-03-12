@@ -56,7 +56,7 @@ class DDPMSampler:
     
     def _get_previous_timestep(self, timestep: int) -> int:     # 内部使用，只被 step 方法内部调用
         # 计算上一个时间步
-        prev_timestep = timestep - self.num_training_steps // self.num_inference_steps
+        prev_timestep = timestep - self.num_training_timesteps // self.num_inference_steps
         # 确保prev_timestep不小于0
         return prev_timestep
 

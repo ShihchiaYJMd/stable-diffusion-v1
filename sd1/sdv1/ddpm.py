@@ -44,13 +44,24 @@ class DDPMSampler:
         # 999, 999-20, 999-40, ..., 0 = 50 steps
         # final = [999, 979, 959, 939, ..., 19]
         step_ratio = self.num_training_steps // self.num_inference_steps    # 1000 // 50 = 20
-        timesteps = ((self.num_training_steps - np.arange(0, self.num_training_steps, step_ratio))[:self.num_inference_steps]).astype(np.int64)
-        # timesteps = (np.arange(0, self.num_inference_steps) * step_ratio)[::-1].copy().astype(np.int64)
-        # ----------------------------------------------------------------------------------------------------------------------------
-        # np.arange(0, self.num_training_steps=1000, step_ratio=20)  ->  [0, 20, 40, 60, ..., 980]
-        # self.num_training_steps - np.arange(0, self.num_training_steps, step_ratio) -> 1000 - [0, 20, 40, 60, ..., 980] = [1000, 980, 960, 940, ..., 20]
-        # [:self.num_inference_steps]  ->  [1000, 980, 960, 940, ..., 20][:50] = [1000, 980, 960, 940, ..., 20]
-        # 处理边界情况: 如果num_training_steps不能被num_inference_steps整除, 生成的序列可能会比预期的长, 如step_ratio = 990 // 50 = 19, np.arange(0, 990, 19)会生成[0, 19, 38, ..., 969, 988], 共52个元素
+        timesteps = (np.arange(0, self.num_inference_steps) * step_ratio)[::-1].copy().astype(np.int64)
+        #-----------------------------------------------
+        # self.num_inference_steps = 5, step_ratio = 2
+        # 1. np.arange(0, self.num_inference_steps)
+        # -> 生成序列 [0, 1, 2, 3, 4]
+        #
+        # 2. * step_ratio
+        # -> 乘以步长 [0, 2, 4, 6, 8]
+        #
+        # 3. [::-1]
+        # -> 反转序列 [8, 6, 4, 2, 0]
+        #
+        # 4. .copy()
+        # -> 创建副本，避免对原数组引用问题
+        #
+        # 5. .astype(np.int64)
+        # -> 转换为64位整数类型
+        #-----------------------------------------------
         self.timesteps = torch.from_numpy(timesteps)
 
     

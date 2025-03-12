@@ -119,5 +119,8 @@ class CrossAttention(nn.Module):
         output = output.transpose(1, 2).contiguous()  # (Batch_Size, Seq_Len, H, Dim_Q / H), 合并多头
         output = output.view(input_shape)  # (Batch_Size, Seq_Len_Q, Dim_Q)
 
+        # (Batch_Size, Seq_Len_Q, Dim_Q) -> (Batch_Size, Seq_Len_Q, Dim_Q)
+        output = self.out_proj(output)
+
         return output
         

@@ -28,8 +28,8 @@ class DDPMSampler:
         # |                   | 是经验性改进与数学设计的结合                                      |
         # +-------------------+--------------------------------------------------------------+
         self.betas = torch.linspace(beta_start ** 0.5, beta_end ** 0.5, num_training_steps, dtype=torch.float32) ** 2
-        self.alpha = 1.0 - self.betas
-        self.alpha_cumprod = torch.cumprod(self.alpha, dim=0)   # [alpha_0, alpha_0 * alpha_1, ..., alpha_0 * alpha_1 * ... * alpha_n]
+        self.alphas = 1.0 - self.betas
+        self.alphas_cumprod = torch.cumprod(self.alphas, dim=0)   # [alpha_0, alpha_0 * alpha_1, ..., alpha_0 * alpha_1 * ... * alpha_n]
         self.one = torch.tensor(1.0)
 
         self.generator = generator
@@ -81,8 +81,8 @@ class DDPMSampler:
         t = timestep
         prev_t = self._get_previous_timestep(t)
         
-        alpha_prod_t = self.alpha_cumprod[t]        # 从0到t的所有alpha的累积乘积(α̅_t)
-        alpha_prod_t_prev = self.alpha_cumprod[prev_t] if prev_t >= 0 else self.one     # 是从0到t-1的所有alpha的累积乘积(α̅_{t-1})
+        alpha_prod_t = self.alphas_cumprod[t]        # 从0到t的所有alpha的累积乘积(α̅_t)
+        alpha_prod_t_prev = self.alphas_cumprod[prev_t] if prev_t >= 0 else self.one     # 是从0到t-1的所有alpha的累积乘积(α̅_{t-1})
         # 在DDPM中，信噪比可以表示为：SNR = α_t / (1 - α_t)，α_t 是累积乘积alpha_cumprod，表示原始信号保留的比例
         # 在扩散过程中，我们从高噪声(低SNR)逐渐转变为低噪声(高SNR)，最终目标是恢复原始无噪声图像
         # 最后一个时间步时，这里当 prev_t < 0 时，使用 self.one （值为1.0）作为alpha值
@@ -128,16 +128,16 @@ class DDPMSampler:
         """forward: add noise for input_image
         use formula in only one step"""
         # original_sample: [batch_size, channels, height, width]
-        alpha_cumprod = self.alpha_cumprod.to(device=original_sample.device, dtype=original_sample.dtype)
+        alphas_cumprod = self.alphas_cumprod.to(device=original_sample.device, dtype=original_sample.dtype)
         timesteps = timesteps.to(original_sample.device)
 
-        sqrt_alpha_prod = alpha_cumprod[timesteps] ** 0.5   # PyTorch允许使用张量作为索引，这称为"高级索引"
+        sqrt_alpha_prod = alphas_cumprod[timesteps] ** 0.5   # PyTorch允许使用张量作为索引，这称为"高级索引"
         # [batch_size]
         sqrt_alpha_prod = sqrt_alpha_prod.flatten()         # flatten() 操作能确保结果始终是一维的
         while len(sqrt_alpha_prod.shape) < len(original_sample.shape):
             sqrt_alpha_prod = sqrt_alpha_prod.unsqueeze(-1)
 
-        sqrt_one_minus_alpha_prod = (1 - alpha_cumprod[timesteps]) ** 0.5   # standard deviation
+        sqrt_one_minus_alpha_prod = (1 - alphas_cumprod[timesteps]) ** 0.5   # standard deviation
         sqrt_one_minus_alpha_prod = sqrt_one_minus_alpha_prod.flatten()
         while len(sqrt_one_minus_alpha_prod.shape) < len(original_sample.shape):
             sqrt_one_minus_alpha_prod = sqrt_one_minus_alpha_prod.unsqueeze(-1)

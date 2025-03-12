@@ -15,6 +15,9 @@ class VAE_AttentionBlock(nn.Module):
 
         residue = x
 
+        # (Batch_Size, Features, Height, Width) -> (Batch_Size, Features, Height, Width)
+        x = self.groupnorm(x)
+
         n, c, h, w = x.shape
 
         # (Batch_Size, Features, Height, Width) -> (Batch_Size, Features, Height * Width)
@@ -48,7 +51,7 @@ class VAE_ResidualBlock(nn.Module):
         self.conv_2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
 
         if in_channels == out_channels:
-            self.residual_layer = nn.Identity
+            self.residual_layer = nn.Identity()
         else:
             self.residual_layer = nn.Conv2d(in_channels, out_channels, kernel_size=1, padding=0)
 
@@ -65,6 +68,9 @@ class VAE_ResidualBlock(nn.Module):
         x = self.conv_1(x)
 
         x = self.groupnorm_2(x)
+
+        # (Batch_Size, Out_Channels, Height, Width) -> (Batch_Size, Out_Channels, Height, Width)
+        x = F.silu(x)
 
         x = self.conv_2(x)
         

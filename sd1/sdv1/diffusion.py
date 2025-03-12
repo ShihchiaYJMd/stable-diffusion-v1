@@ -147,6 +147,9 @@ class UNet(nn.Module):
             x = layers(x, context, time)
 
         return x
+    
+
+# ------------------------------------------------------------------------------------ #
 
 
 class TimeEmbedding(nn.Module):
@@ -158,10 +161,12 @@ class TimeEmbedding(nn.Module):
     def forward(self, x: torch.tensor):
         # x: (1, 320)
 
+        # (1, 320) -> (1, 1280)
         x = self.linear_1(x)
 
         x = F.silu(x)
 
+        # (1, 1280) -> (1, 1280)
         x = self.linear_2(x)
 
         # (1, 1280)
@@ -187,7 +192,7 @@ class SwitchSequential(nn.Module):
 
     def forward(self, x: torch.tensor, context: torch.tensor, time: torch.tensor) -> torch.tensor:
         # 路由机制
-        for layer in self.layers:
+        for layer in self:
             """根据层类型选择性地传递 context"""
             if isinstance(layer, UNet_AttentionBlock):
                 x = layer(x, context)

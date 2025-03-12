@@ -11,7 +11,7 @@ class Clip(nn.Module):
         # embedding dimension = 768
         # maximum sequence length = 77
 
-        self.layers = nn.Module(
+        self.layers = nn.ModuleList(
             [CLIPLayer(12, 768) for _ in range(12)]
         )
 
@@ -81,7 +81,7 @@ class CLIPLayer(nn.Module):
         # (Batch_Size, Seq_Len, Dim) -> (Batch_Size, Seq_Len, Dim)
         x = self.layernorm_1(x)
 
-        x = self.attention(x, causal_mask=False)
+        x = self.attention(x, causal_mask=True)
 
         x += residue
 

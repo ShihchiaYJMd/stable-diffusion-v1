@@ -33,8 +33,8 @@ class DDPMSampler:
         self.one = torch.tensor(1.0)
 
         self.generator = generator
-        self.num_training_timesteps = num_training_steps
-        self.timesteps = torch.from_numpy(np.arange(0, self.num_training_timesteps)[::-1].copy())
+        self.num_training_steps = num_training_steps
+        self.timesteps = torch.from_numpy(np.arange(0, self.num_training_steps)[::-1].copy())
 
     
     def set_inference_timesteps(self, num_inference_steps=50):
@@ -43,8 +43,8 @@ class DDPMSampler:
         # 999, 998, 997, 996, ..., 0 = 1000 steps
         # 999, 999-20, 999-40, ..., 0 = 50 steps
         # final = [999, 979, 959, 939, ..., 19]
-        step_ratio = self.num_training_timesteps // self.num_inference_steps    # 1000 // 50 = 20
-        timesteps = ((self.num_training_timesteps - np.arange(0, self.num_training_steps, step_ratio))[:self.num_inference_steps]).astype(np.int64)
+        step_ratio = self.num_training_steps // self.num_inference_steps    # 1000 // 50 = 20
+        timesteps = ((self.num_training_steps - np.arange(0, self.num_training_steps, step_ratio))[:self.num_inference_steps]).astype(np.int64)
         # timesteps = (np.arange(0, self.num_inference_steps) * step_ratio)[::-1].copy().astype(np.int64)
         # ----------------------------------------------------------------------------------------------------------------------------
         # np.arange(0, self.num_training_steps=1000, step_ratio=20)  ->  [0, 20, 40, 60, ..., 980]
@@ -56,7 +56,7 @@ class DDPMSampler:
     
     def _get_previous_timestep(self, timestep: int) -> int:     # 内部使用，只被 step 方法内部调用
         # 计算上一个时间步
-        prev_timestep = timestep - self.num_training_timesteps // self.num_inference_steps
+        prev_timestep = timestep - self.num_training_steps // self.num_inference_steps
         # 确保prev_timestep不小于0
         return prev_timestep
 

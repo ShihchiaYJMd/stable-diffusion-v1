@@ -181,9 +181,9 @@ class UpSample(nn.Module):
 
     
 class SwitchSequential(nn.Module):
-    def __init__(self, *layers):
-        super().__init__()  # 正确地将参数传递给父类
-        self.layers = nn.ModuleList(layers)
+    # def __init__(self, *layers):
+    #     super().__init__()  # 正确地将参数传递给父类
+    #     self.layers = nn.ModuleList(layers)
 
     def forward(self, x: torch.tensor, context: torch.tensor, time: torch.tensor) -> torch.tensor:
         # 路由机制
